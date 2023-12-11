@@ -6,19 +6,32 @@ def emotion_detector(text_to_analyze):
     header = {"grpc-metadata-mm-model-id": "emotion_aggregated-workflow_lang_en_stock"}
     myobj = { "raw_document": { "text": text_to_analyze } }
     response = requests.post(url, json = myobj, headers=header)
-
     json_obj = json.loads(response.text)
-    editted_json = json_obj["emotionPredictions"][0]["emotion"]
 
-    dominant = {"dominant_emotion": editted_json["anger"]}
-    emo = "anger"
+    nose = json_obj
+    dom_emo = "anger"
 
-    for emotion in editted_json.keys():        
-        if editted_json[emotion] > dominant["dominant_emotion"]:
-            dominant["dominant_emotion"] = editted_json[emotion]
-            emo = emotion
+    if response.status_code == 200:
+        editted_json = json_obj["emotionPredictions"][0]["emotion"]
+        dominant = {"dominant_emotion": editted_json["anger"]}
 
-    dominant["dominant_emotion"] = emo
-    editted_json.update(dominant)
+        for emotion in editted_json.keys():        
+            if editted_json[emotion] > dominant["dominant_emotion"]:
+                dominant["dominant_emotion"] = editted_json[emotion]
+                dom_emo = emotion
 
-    return editted_json
+        dominant["dominant_emotion"] = dom_emo
+        editted_json.update(dominant)
+        nose = editted_json
+
+    elif response.status_code == 400:
+        nose = {
+            "anger": None, 
+            "disgust": None, 
+            "fear": None, 
+            "joy": None, 
+            "sadness": None, 
+            "dominant_emotion": None
+        }
+    
+    return nose
